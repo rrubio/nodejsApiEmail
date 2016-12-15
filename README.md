@@ -1,8 +1,10 @@
 # Email Backend
 
-This project uses ExpressJS and NodeJS.
+Send emails using sendgrid and mailgun.
 
-## execute `npm install` in order to install project dependencies.
+## This project uses ExpressJS and NodeJS.
+
+execute `npm install` in order to install project dependencies.
 
 ## Server API credentials for mail providers
 
