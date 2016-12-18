@@ -13,7 +13,7 @@ const MAIL_GUN_URL     = '<YOUR_GUNMAIL_DOMAIN_HERE>';
 const MAIL_GUN_USER    = 'api';
 const MAIL_GUN_API_KEY = '<YOUR_API_KEY>';
 
-const FROM_EMAIL       = '<YOUR_FROM_EMAIL>';  
+const FROM_EMAIL       = '<YOUR_FROM_EMAIL>'; 
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
@@ -22,11 +22,11 @@ router.get('/', function(req, res, next) {
 
 router.post('/testMailGunPost', function(req, res, next){
 
-  var subject      = JSON.stringify(req.body.emailSubject);
-  var emailMessage = JSON.stringify(req.body.emailMessage);
-  var to  = emailModule.mailGunList(JSON.stringify(req.body.toEmail));
-  var cc  = emailModule.mailGunList(JSON.stringify(req.body.ccEmail));
-  var bcc = emailModule.mailGunList(JSON.stringify(req.body.bccEmail));
+  var subject      = req.body['emailSubject'];
+  var emailMessage = req.body['emailMessage'];
+  var to  = emailModule.mailGunList(req.body['toEmail']);
+  var cc  = emailModule.mailGunList(req.body['ccEmail']);
+  var bcc = emailModule.mailGunList(req.body['bccEmail']);
 
   var options = {
     "method": "POST",
@@ -55,11 +55,11 @@ router.post('/testMailGunPost', function(req, res, next){
 router.post('/testPostSendgrid', function(req, res, next) {
 
 var emails = {};
-emails['subject']  = JSON.stringify(req.body.emailSubject);
-emails['emailMessage'] = JSON.stringify(req.body.emailMessage);
-emails['toEmail']  = emailModule.sendGridList(JSON.stringify(req.body.toEmail));
-emails['ccEmail']  = emailModule.sendGridList(JSON.stringify(req.body.ccEmail));
-emails['bccEmail'] = emailModule.sendGridList(JSON.stringify(req.body.bccEmail));
+emails['subject']  = req.body['emailSubject'];
+emails['emailMessage'] = req.body['emailMessage'];
+emails['recipients'] = emailModule.sendGridList(req.body['toEmail'], req.body['ccEmail'], req.body['bccEmail']);
+
+console.log(emails['recipients']);
 
 var options = { method: 'POST',
   url: SENDGRID_URL,
@@ -68,41 +68,23 @@ var options = { method: 'POST',
      'content-type': 'application/json',
      authorization: SENDGRID_API_KEY 
   },
-  body: 
-   { personalizations: [ { 
-     to: [ 
-       JSON.parse(emails['toEmail'])
-     ],
-     cc: [
-       JSON.parse(emails['ccEmail']) 
-     ],
-     bcc: [
-       JSON.parse(emails['bccEmail']) 
-     ]
-     } ],
+  body:{ 
+    personalizations: emails['recipients'],
      from: { email: FROM_EMAIL },
-     subject: JSON.parse(emails['subject']),
-     content: [ { type: 'text/plain', value: JSON.parse(emails['emailMessage']) } ] },
-  json: true }; 
-
-
-  console.log('OPTIONS :: ' + JSON.stringify(options));
+     subject: emails['subject'],
+     content: [ { type: 'text/plain', value: emails['emailMessage'] } ] 
+    },
+    json: true 
+}; 
 
   request(options, function(error, response, formContent) { 
     
-    console.log('*** ERROR *** ' + JSON.stringify(error));
-    console.log('*** RESPONSE *** ' + JSON.stringify(error));
-
     if(response.statusCode == 200 || response.statusCode == 202) {
-
-      res.status(response.statusCode).send({ 'status' : response.statusCode });
-    
+      res.status(response.statusCode).send({ 'status' : response.statusCode });    
     } else {
-      console.log('*** ERROR *** ' + JSON.stringify(error));
       //NOTE: Error expected here due to none unique email address
       //      to demonstrate failover. Only when cc & bcc are the same.      
       res.status(response.statusCode).send({ 'status' : response.statusCode });
-
     }
 
   });
